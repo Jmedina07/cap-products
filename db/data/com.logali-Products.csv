@@ -1,0 +1,4 @@
+﻿ID,name,Descripction,ImageURL,ReleaseData,DiscontinuedDate,Price,Height,Width,Depth,Quantity
+08c142fa-01b0-441d-b01d-eeaa3291f6f0,Bread,Whole grain bread,t/webapp/assets/bread.jpg,1992-01-01T00:00:00Z,,2.5,5,10,8,20
+08c142fa-01b0-441d-b01d-eeaa3291f6f1,Milk,Low fat milk,t/webapp/assets/milk.jpg,1995-10-01T00:00:00Z,,3.5,6,5,6,100
+08c142fa-01b0-441d-b01d-eeaa3291f6f2,Vint soda,American Variety,t/webapp/assets/vint-soda.jpg,1992-01-01T00:00:00Z,,4.5,7,7,3,1

@@ -27,7 +27,7 @@ entity Supplier {
         Fax        : String;
 }
 
-entity Category {
+entity Categories {
     key ID   : String(1);
         name : String;
 }
