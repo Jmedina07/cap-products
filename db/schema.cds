@@ -1,5 +1,11 @@
 namespace com.logali;
 
+using {
+    cuid,
+    managed
+} from '@sap/cds/common';
+
+
 type Address {
     Street     : String;
     City       : String;
@@ -54,76 +60,129 @@ type Address {
 //     virtual dicount_2 : Decimal;
 // }
 
-entity Products {
-    key ID               : UUID;
-        Name             : String not null;
-        Descripction     : String;
+type Dec : Decimal(16, 2);
+
+context materials {
+
+
+    entity Products : cuid, managed {
+        // key ID               : UUID;
+        Name             : localized String not null;
+        Descripction     : localized String;
         ImageURL         : String;
         ReleaseData      : DateTime default $now;
         DiscontinuedDate : DateTime;
-        Price            : Decimal(16, 2);
-        Height           : Decimal(16, 2);
+        Price            : Dec;
+        Height           : type of Price;
         Width            : Decimal(16, 2);
         Depth            : Decimal(16, 2);
         Quantity         : Decimal(16, 2);
+        // Supplier_Id      : UUID;
+        Supplier         : Association to Suppliers;
+        // UnitofMeasure_Id : String(2);
+        UnitofMeasure    : Association to UnitofMeasures;
+        Currency         : Association to Currencies;
+        DimensionUnit    : Association to DimensionUnits;
+        Category         : Association to Categories;
+        SalesData        : Association to many SalesData
+                               on SalesData.Product = $self;
+        Reviews          : Association to many ProductReview
+                               on Reviews.Product = $self;
+    };
 }
 
-entity Suppliers {
-    key ID      : UUID;
-        name    : String;
-        Address : Address;
-        Email   : String;
-        Phone   : String;
-        Fax     : String;
-}
+entity Orders : cuid {
+    // key ID       : UUID;
+    Date     : Date;
+    Customer : String;
+    Item     : Composition of many OrderItems
+                   on Item.Order = $self;
+};
+
+entity OrderItems : cuid {
+    // key ID       : UUID;
+    Order    : Association to Orders;
+    Product  : Association to materials.Products;
+    Quantity : Integer;
+};
+
+entity Suppliers : cuid, managed {
+    // key ID      : UUID;
+    name    : type of materials.Products : Name;
+    Address : Address;
+    Email   : String;
+    Phone   : String;
+    Fax     : String;
+    Product : Association to many materials.Products
+                  on Product.Supplier = $self;
+};
 
 entity Categories {
     key ID   : String(1);
-        name : String;
+        name : localized String;
 }
 
 entity StockAvailability {
     key ID          : Integer;
-        Description : String;
+        Description : localized String;
+        Product     : Association to materials.Products;
 }
 
 entity Currencies {
     key ID          : String(3);
-        Description : String;
+        Description : localized String;
 }
 
 entity UnitofMeasures {
     key ID          : String(2);
-        Description : String;
+        Description : localized String;
 }
 
 entity DimensionUnits {
     key ID          : String(2);
-        Description : String;
+        Description : localized String;
 }
 
 entity Months {
     key ID               : String(2);
-        Description      : String;
-        ShortDescription : String;
+        Description      : localized String;
+        ShortDescription : String(3);
 }
 
 entity ProductReview {
-    key Name    : String;
+    key ID      : UUID;
+        Name    : String;
         Rating  : Integer;
         Comment : String;
+        Product : Association to materials.Products;
 }
 
 entity SalesData {
-    key ID           : UUID;
-        DeliveryDate : DateTime;
-        Revenue      : Decimal(16, 2);
+    key ID            : UUID;
+        DeliveryDate  : DateTime;
+        Revenue       : Decimal(16, 2);
+        Product       : Association to materials.Products;
+        Currency      : Association to Currencies;
+        DeliveryMonth : Association to Months;
 }
 
-entity SelProducts   as select from Products;
+entity SelProducts   as select from materials.Products;
+
+entity SelProducts1  as
+    select from SelProducts {
+        *
+    };
+
+entity SelProducts2  as
+    select from SelProducts {
+        Name,
+        Price,
+        Quantity
+
+    };
 
 entity SelProducts3  as
-    select from Products
+    select from materials.Products
     left join ProductReview
         on Products.Name = ProductReview.Name
     {
@@ -137,13 +196,13 @@ entity SelProducts3  as
     order by
         Rating;
 
-entity ProjProducts  as projection on Products;
+entity ProjProducts  as projection on materials.Products;
 
-entity ProjProducts2 as projection on Products {
+entity ProjProducts2 as projection on materials.Products {
     *
 };
 
-entity ProjProducts3 as projection on Products {
+entity ProjProducts3 as projection on materials.Products {
     ReleaseData,
     Name
 };
@@ -152,4 +211,12 @@ entity ProjProducts3 as projection on Products {
 //         Name, Price, Quantity
 //     from Products
 //     where Name = :pName;
-    
+
+extend materials.Products with {
+    PriceCondition     : String(2);
+    PriceDetermination : String(3);
+}
+
+entity Course {
+    key ID : UUID
+}
