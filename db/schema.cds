@@ -64,7 +64,6 @@ type Dec : Decimal(16, 2);
 
 context materials {
 
-
     entity Products : cuid, managed {
         // key ID               : UUID;
         Name             : localized String not null;
@@ -78,145 +77,148 @@ context materials {
         Depth            : Decimal(16, 2);
         Quantity         : Decimal(16, 2);
         // Supplier_Id      : UUID;
-        Supplier         : Association to Suppliers;
+        Supplier         : Association to sales.Suppliers;
         // UnitofMeasure_Id : String(2);
         UnitofMeasure    : Association to UnitofMeasures;
         Currency         : Association to Currencies;
         DimensionUnit    : Association to DimensionUnits;
         Category         : Association to Categories;
-        SalesData        : Association to many SalesData
+        SalesData        : Association to many sales.SalesData
                                on SalesData.Product = $self;
         Reviews          : Association to many ProductReview
                                on Reviews.Product = $self;
     };
-}
 
-entity Orders : cuid {
-    // key ID       : UUID;
-    Date     : Date;
-    Customer : String;
-    Item     : Composition of many OrderItems
-                   on Item.Order = $self;
+    entity Categories {
+        key ID   : String(1);
+            name : localized String;
+    };
+
+    entity Currencies {
+        key ID          : String(3);
+            Description : localized String;
+    };
+
+    entity UnitofMeasures {
+        key ID          : String(2);
+            Description : localized String;
+    };
+
+    entity DimensionUnits {
+        key ID          : String(2);
+            Description : localized String;
+    };
+
+    entity ProductReview {
+        key ID      : UUID;
+            Name    : String;
+            Rating  : Integer;
+            Comment : String;
+            Product : Association to materials.Products;
+    };
 };
 
-entity OrderItems : cuid {
-    // key ID       : UUID;
-    Order    : Association to Orders;
-    Product  : Association to materials.Products;
-    Quantity : Integer;
-};
 
-entity Suppliers : cuid, managed {
-    // key ID      : UUID;
-    name    : type of materials.Products : Name;
-    Address : Address;
-    Email   : String;
-    Phone   : String;
-    Fax     : String;
-    Product : Association to many materials.Products
-                  on Product.Supplier = $self;
-};
+context sales {
+    entity Orders : cuid {
+        // key ID       : UUID;
+        Date     : Date;
+        Customer : String;
+        Item     : Composition of many OrderItems
+                       on Item.Order = $self;
+    };
 
-entity Categories {
-    key ID   : String(1);
-        name : localized String;
-}
+    entity OrderItems : cuid {
+        // key ID       : UUID;
+        Order    : Association to Orders;
+        Product  : Association to materials.Products;
+        Quantity : Integer;
+    };
 
-entity StockAvailability {
-    key ID          : Integer;
-        Description : localized String;
-        Product     : Association to materials.Products;
-}
+    entity Suppliers : cuid, managed {
+        // key ID      : UUID;
+        name    : type of materials.Products : Name;
+        Address : Address;
+        Email   : String;
+        Phone   : String;
+        Fax     : String;
+        Product : Association to many materials.Products
+                      on Product.Supplier = $self;
+    };
 
-entity Currencies {
-    key ID          : String(3);
-        Description : localized String;
-}
+    entity StockAvailability {
+        key ID          : Integer;
+            Description : localized String;
+            Product     : Association to materials.Products;
+    };
 
-entity UnitofMeasures {
-    key ID          : String(2);
-        Description : localized String;
-}
+    entity Months {
+        key ID               : String(2);
+            Description      : localized String;
+            ShortDescription : String(3);
+    };
 
-entity DimensionUnits {
-    key ID          : String(2);
-        Description : localized String;
-}
+    entity SalesData {
+        key ID            : UUID;
+            DeliveryDate  : DateTime;
+            Revenue       : Decimal(16, 2);
+            Product       : Association to materials.Products;
+            Currency      : Association to materials.Currencies;
+            DeliveryMonth : Association to Months;
+    };
 
-entity Months {
-    key ID               : String(2);
-        Description      : localized String;
-        ShortDescription : String(3);
-}
+    entity SelProducts   as select from materials.Products;
 
-entity ProductReview {
-    key ID      : UUID;
-        Name    : String;
-        Rating  : Integer;
-        Comment : String;
-        Product : Association to materials.Products;
-}
+    entity SelProducts1  as
+        select from SelProducts {
+            *
+        };
 
-entity SalesData {
-    key ID            : UUID;
-        DeliveryDate  : DateTime;
-        Revenue       : Decimal(16, 2);
-        Product       : Association to materials.Products;
-        Currency      : Association to Currencies;
-        DeliveryMonth : Association to Months;
-}
+    entity SelProducts2  as
+        select from SelProducts {
+            Name,
+            Price,
+            Quantity
 
-entity SelProducts   as select from materials.Products;
+        };
 
-entity SelProducts1  as
-    select from SelProducts {
+    entity SelProducts3  as
+        select from materials.Products
+        left join materials.ProductReview
+            on Products.Name = ProductReview.Name
+        {
+            Rating,
+            Products.Name,
+            sum(Price) as TotalPrice,
+        }
+        group by
+            Rating,
+            Products.Name
+        order by
+            Rating;
+
+    entity ProjProducts  as projection on materials.Products;
+
+    entity ProjProducts2 as projection on materials.Products {
         *
     };
 
-entity SelProducts2  as
-    select from SelProducts {
-        Name,
-        Price,
-        Quantity
+    entity ProjProducts3 as projection on materials.Products {
+        ReleaseData,
+        Name
+    };
+    // entity  ParamProducts( pName : String ) as
+    //     select
+    //         Name, Price, Quantity
+    //     from Products
+    //     where Name = :pName;
 
+    extend materials.Products with {
+        PriceCondition     : String(2);
+        PriceDetermination : String(3);
     };
 
-entity SelProducts3  as
-    select from materials.Products
-    left join ProductReview
-        on Products.Name = ProductReview.Name
-    {
-        Rating,
-        Products.Name,
-        sum(Price) as TotalPrice,
-    }
-    group by
-        Rating,
-        Products.Name
-    order by
-        Rating;
-
-entity ProjProducts  as projection on materials.Products;
-
-entity ProjProducts2 as projection on materials.Products {
-    *
-};
-
-entity ProjProducts3 as projection on materials.Products {
-    ReleaseData,
-    Name
-};
-// entity  ParamProducts( pName : String ) as
-//     select
-//         Name, Price, Quantity
-//     from Products
-//     where Name = :pName;
-
-extend materials.Products with {
-    PriceCondition     : String(2);
-    PriceDetermination : String(3);
-}
-
-entity Course {
-    key ID : UUID
+    entity Course {
+        key ID : UUID
+    };
 }
