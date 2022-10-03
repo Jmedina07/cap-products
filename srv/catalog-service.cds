@@ -98,3 +98,13 @@ define service CatalogService {
             Description as Text
         from logali.materials.DimensionUnits;
 }
+define service MyService {
+
+ entity SuppliersProduct as select from logali.materials.Products[ Name = 'Bread' ];    
+
+ entity EntityInfix as select 
+ from logali.materials.Products {
+     
+ };
+
+}

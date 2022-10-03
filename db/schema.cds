@@ -98,6 +98,11 @@ context materials {
         key ID          : String(3);
             Description : localized String;
     };
+    entity StockAvailability {
+        key ID          : Integer;
+            Description : localized String;
+            Product     : Association to materials.Products;
+    };
 
     entity UnitofMeasures {
         key ID          : String(2);
@@ -144,12 +149,6 @@ context sales {
         Fax     : String;
         Product : Association to many materials.Products
                       on Product.Supplier = $self;
-    };
-
-    entity StockAvailability {
-        key ID          : Integer;
-            Description : localized String;
-            Product     : Association to materials.Products;
     };
 
     entity Months {
